@@ -33,7 +33,7 @@ begin
             	result <= x"00000000";
             end if;
         elsif(control = "100")then
-            result <= std_logic_vector(unsigned(a) sll N);
+            result <= std_logic_vector(signed(a) sll N);
         else
             result <= x"00000000";
         end if;
