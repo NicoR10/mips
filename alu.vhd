@@ -1,6 +1,6 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.std_logic_UNSIGNED.all;
+use IEEE.std_logic_SIGNED.all;
 use IEEE.numeric_std.all;
 
 entity alu is
