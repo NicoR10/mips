@@ -15,7 +15,7 @@ end alu;
 
 architecture beh_alu of alu is
 begin
-    process(control, a, b)
+    process(control, a, b, result)
     begin
     	zero <= '0';
     	if(control = "000") then
