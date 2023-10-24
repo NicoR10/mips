@@ -1,6 +1,6 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.std_logic_UNSIGNED.all;
+use IEEE.std_logic_SIGNED.all;
 use IEEE.numeric_std.all;
 
 entity alu is
@@ -9,16 +9,15 @@ entity alu is
         b: in std_logic_vector(31 downto 0);   
         control: in std_logic_vector(2 downto 0);  
         result: out std_logic_vector(31 downto 0);  
-        Carryout: out std_logic;
         zero: out std_logic;
     );            
 end alu;
 
 architecture beh_alu of alu is
 begin
-    process(control, a, b)
+    process(control, a, b, result)
     begin
-    	zero <= "0";
+    	zero <= '0';
     	if(control = "000") then
             result <= a and b;
         elsif(control = "001") then
@@ -33,13 +32,13 @@ begin
             else
             	result <= x"00000000";
             end if;
-        elsif(control ="100")then
-            result <= std_logic_vector(unsigned(a) sll N);
+        elsif(control = "100")then
+            result <= std_logic_vector(signed(a) sll N);
         else
             result <= x"00000000";
         end if;
         if(result = x"00000000") then
-        	zero <= "1";
+        	zero <= '1';
         end if;
     end process;
 end beh_alu;
