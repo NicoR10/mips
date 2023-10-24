@@ -14,31 +14,33 @@ entity alu is
 end alu;
 
 architecture beh_alu of alu is
+    signal r: std_logic_vector(31 downto 0) := (others => '0');
 begin
-    process(control, a, b, result)
+    process(control, a, b, r)
     begin
     	zero <= '0';
     	if(control = "000") then
-            result <= a and b;
+            r <= a and b;
         elsif(control = "001") then
-            result <= a or b;
+            r <= a or b;
         elsif(control = "010") then
-            result <= a + b;
+            r <= a + b;
         elsif(control = "110") then
-            result <= a - b;
+            r <= a - b;
         elsif(control = "111") then
             if(a < b) then
-            	result <= x"00000001";
+            	r <= x"00000001";
             else
-            	result <= x"00000000";
+            	r <= x"00000000";
             end if;
         elsif(control = "100")then
-            result <= std_logic_vector(signed(a) sll N);
+            r <= std_logic_vector(signed(b) sll N);
         else
-            result <= x"00000000";
+        	r <= x"00000000";
         end if;
-        if(result = x"00000000") then
+        if(r = x"00000000") then
         	zero <= '1';
         end if;
-    end process;
+        result <= r;
+    end process;    
 end beh_alu;

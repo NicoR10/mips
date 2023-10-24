@@ -36,21 +36,19 @@ BEGIN
  
     tb : PROCESS
     BEGIN
-        A <= x"00000001";
-        B <= x"0000000A";
-        op <= "000";
-        wait for 10 ns;
+        A <= x"00000002";
+        B <= x"00000001";
         op <= "000";
         wait for 10 ns;
         op <= "001";
-        wait for 10 ns;
-        op <= "011";
         wait for 10 ns;
         op <= "010";
         wait for 10 ns;
         op <= "110";
         wait for 10 ns;
         op <= "111";
+        wait for 10 ns;
+        op <= "100";
         wait for 10 ns;
         A <= x"000000d5";
         B <= x"00000002";
