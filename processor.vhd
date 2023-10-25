@@ -38,12 +38,19 @@ component registers
            
 end component;
 
---DECLARACION DE SE�ALES--
+--DECLARACION DE SE�ALES--
     --ETAPA IF--
 
 
     --ETAPA ID--
-
+	signal cuenta: STD_LOGIC_VECTOR(6 downto 0) := (others => '0');
+	signal reset: STD_LOGIC := '0';
+	signal RegWrite: STD_LOGIC := '0'; 
+	signal ID_Instruction: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+	signal WB_reg_wr: STD_LOGIC := '0';
+	signal WB_data_wr:  STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+	signal ID_data1_rd:  STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+	signal ID_data2_rd:  STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
 
     --ETAPA EX--
 
@@ -71,13 +78,13 @@ Registers_inst:  registers
 	Port map (
 			clk => clk, 
 			reset => reset, 
-			wr => RegWrite, 
-			reg1_dr => ID_Instruction(25 downto 21), 
-			reg2_dr => ID_Instruction( 20 downto 16), 
-			reg_wr => WB_reg_wr, 
-			data_wr => WB_data_wr , 
-			data1_rd => ID_data1_rd ,
-			data2_rd => ID_data2_rd ); 
+			wr => RegWrite, --control
+			reg1_dr => ID_Instruction(25 downto 21), --rt
+			reg2_dr => ID_Instruction( 20 downto 16), --rs
+			reg_wr => WB_reg_wr, --Escribir registro
+			data_wr => WB_data_wr , --Escribir dato
+			data1_rd => ID_data1_rd ,--Dato leído 1
+			data2_rd => ID_data2_rd ); --Dato leído 2
 
  
  
@@ -85,7 +92,10 @@ Registers_inst:  registers
 ---------------------------------------------------------------------------------------------------------------
 -- REGISTRO DE SEGMENTACION ID/EX
 ---------------------------------------------------------------------------------------------------------------
+ID_EX: process(clk)
+begin
 
+	end process;
  
 ---------------------------------------------------------------------------------------------------------------
 -- ETAPA EX
@@ -95,7 +105,6 @@ Registers_inst:  registers
 ---------------------------------------------------------------------------------------------------------------
 -- REGISTRO DE SEGMENTACION EX/MEM
 ---------------------------------------------------------------------------------------------------------------
-
 
 ---------------------------------------------------------------------------------------------------------------
 -- ETAPA MEM
