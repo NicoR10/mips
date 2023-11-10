@@ -62,8 +62,18 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL ID_data2_rd : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL ID_immediate : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL ID_control_WB : STD_LOGIC := '0';
-	SIGNAL ID_control_M : STD_LOGIC := '0';
-	SIGNAL ID_control_EX : STD_LOGIC := '0';
+	-- Control etapa EX
+	SIGNAL ID_control_alu_op : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL ID_control_alu_src : STD_LOGIC := '0';
+	SIGNAL ID_control_reg_dst : STD_LOGIC := '0';
+	-- Control etapa MEM
+	SIGNAL ID_control_branch : STD_LOGIC := '0';
+	SIGNAL ID_control_mem_read: STD_LOGIC := '0';
+	SIGNAL ID_control_mem_write: STD_LOGIC := '0';
+	-- Control etapa WB
+	SIGNAL ID_control_reg_write : STD_LOGIC := '0';
+	SIGNAL ID_control_mem_to_reg : STD_LOGIC := '0';
+
 
 	--ETAPA EX--
 	SIGNAL EX_data1_rd : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
@@ -75,17 +85,30 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL EX_alu_zero : STD_LOGIC := '0';
 	SIGNAL EX_Instruction : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL EX_control_WB : STD_LOGIC := '0';
-	SIGNAL EX_control_M : STD_LOGIC := '0';
-	SIGNAL EX_control_EX : STD_LOGIC := '0';
-	SIGNAL EX_alu_op : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL EX_reg_dst : STD_LOGIC := '0';
 	SIGNAL EX_regdst_mux_out : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
+	-- Control etapa EX
+	SIGNAL EX_control_alu_op : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL EX_control_reg_dst : STD_LOGIC := '0';
+	SIGNAL EX_control_alu_src: STD_LOGIC := '0';
+	-- Control etapa MEM
+	SIGNAL EX_control_branch : STD_LOGIC := '0';
+	SIGNAL EX_control_mem_read : STD_LOGIC := '0';
+	SIGNAL EX_control_mem_write : STD_LOGIC := '0';
+	-- Control etapa WB
+	SIGNAL EX_control_reg_write : STD_LOGIC := '0';
+	SIGNAL EX_control_mem_to_reg : STD_LOGIC := '0';
+
 	--ETAPA MEM--
 	SIGNAL MEM_control_WB : STD_LOGIC := '0';
-	SIGNAL MEM_control_M : STD_LOGIC := '0';
+	SIGNAL MEM_control_branch : STD_LOGIC := '0';
+	SIGNAL MEM_control_mem_read : STD_LOGIC := '0';
+	SIGNAL MEM_control_mem_write : STD_LOGIC := '0';
+	-- Control etapa WB
+	SIGNAL MEM_control_reg_write : STD_LOGIC := '0';
+	SIGNAL MEM_control_mem_to_reg : STD_LOGIC := '0';
 
 	--ETAPA WB-- 
-	SIGNAL WB_control_WB : STD_LOGIC := '0';
+	SIGNAL WB_control_mem_to_reg : STD_LOGIC := '0';
 	---------------------------------------------------------------------------------------------------------------
 BEGIN
 	---------------------------------------------------------------------------------------------------------------
@@ -124,7 +147,44 @@ BEGIN
 	-- CONTROL UNIT
 	PROCESS (ID_Instruction) :
 	BEGIN
-		--completar la próxima!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		VARIABLE aux_control: STD_LOGIC_VECTOR(9 DOWNTO 0) := (OTHERS => '0');
+		-- Tipo R
+		IF (ID_Instruction(31 DOWNTO 25) = '000000') THEN
+			aux_control := '1010000010';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '100011') THEN -- LW
+			aux_control := '0000101011';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '101011') THEN -- SW
+			aux_control = '0000100100';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '000100') THEN -- BEQ
+			aux_control = '0001010000';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '000100') THEN -- LUI
+			-- Señales de control de LUI
+			aux_control = 0100100010;
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '000100') THEN -- ADDI
+			-- Señales de control de ADDI
+			aux_control = '0101100010';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '000100') THEN -- ANDI
+			-- Señales de control de ANDI
+			aux_control = '0110100010';
+		ELSIF (ID_Instruction(31 DOWNTO 25) = '000100') THEN -- ORI
+			-- Señales de control de ORI
+			aux_control = '0111100010';
+		ELSE
+			aux_control = '0000000000';
+		END IF;
+
+		-- Control etapa EX
+		ID_control_reg_dst <= aux_control(9);
+		ID_control_alu_op <= aux_control(8 downto 6);
+		ID_control_alu_src <= aux_control(5);
+		-- Control etapa MEM
+		ID_control_branch <= aux_control(4);
+		ID_control_mem_read <= aux_control(3);
+		ID_control_mem_write <= aux_control(2);
+		-- Control etapa WB
+		ID_control_reg_write <= aux_control(1);
+		ID_control_mem_to_reg <= aux_control(0);
+
 	END PROCESS;
 
 	---------------------------------------------------------------------------------------------------------------
@@ -138,8 +198,18 @@ BEGIN
 		EX_immediate <= ID_immediate;
 		EX_Instruction <= ID_Instruction;
 		EX_control_WB <= ID_control_WB;
-		EX_control_M <= ID_control_M;
-		EX_control_EX <= ID_control_EX;
+		-- Control etapa EX
+		EX_control_alu_src <= ID_control_alu_src;
+		EX_control_alu_op <= ID_control_alu_op;
+		EX_control_reg_dst <= ID_control_reg_dst;
+		-- Control etapa MEM
+		EX_control_branch <= ID_control_branch;
+		EX_control_mem_read <= ID_control_mem_read;
+		EX_control_mem_write <= ID_control_mem_write;
+		-- Control etapa WB
+		EX_control_reg_write <= ID_control_reg_write;
+		EX_control_reg_write <= ID_control_mem_to_reg;
+
 
 	END PROCESS;
 
@@ -169,13 +239,13 @@ BEGIN
 	END PROCESS;
 
 	-- MUX RegDst (para determinar el registro destino según el tipo de instrucción)
-	PROCESS (EX_reg_dst) :
+	PROCESS (EX_control_reg_dst) :
 	BEGIN
 
-		IF (EX_reg_dst = '0') THEN
+		IF (EX_control_reg_dst = '0') THEN
 			-- tipo r
 			EX_regdst_mux_out <= EX_Instruction(20 DOWNTO 16);
-		ELSIF (EX_reg_dst = '1') THEN
+		ELSIF (EX_control_reg_dst = '1') THEN
 			EX_regdst_mux_out <= EX_Instruction(15 DOWNTO 11);
 		ELSE
 			EX_regdst_mux_out <= "00000";
@@ -184,9 +254,9 @@ BEGIN
 	END PROCESS;
 
 	-- ALU CONTROL UNIT
-	PROCESS (EX_alu_op, EX_Instruction) :
+	PROCESS (EX_control_alu_op, EX_Instruction) :
 	BEGIN
-		IF (EX_alu_op = "10") THEN
+		IF (EX_control_alu_op = "010") THEN
 			--provisorio, solo para tipo r
 			IF (EX_Instruction(5 DOWNTO 0) = "100000") THEN
 				EX_alu_ctrl_out <= "010";
@@ -201,10 +271,10 @@ BEGIN
 			ELSE
 				EX_alu_ctrl_out <= "000";
 			END IF;
-		ELSIF (EX_alu_op = "00") THEN
+		ELSIF (EX_control_alu_op = "000") THEN
 			--lw o sw
 			EX_alu_ctrl_out <= "010";
-		ELSIF (EX_alu_op = "01") THEN
+		ELSIF (EX_control_alu_op = "001") THEN
 			-- branch equal
 			EX_alu_ctrl_out <= "110";
 		ELSE
@@ -218,8 +288,13 @@ BEGIN
 		EX_MEM : PROCESS (clk)
 		BEGIN
 
-			MEM_control_M <= EX_control_M;
-			MEM_control_WB <= EX_control_WB;
+			-- Control etapa MEM
+			MEM_control_branch <= EX_control_branch;
+			MEM_control_mem_read <= EX_control_mem_read;
+			MEM_control_mem_write <= EX_control_mem_write;
+			-- Control etapa WB
+			MEM_control_reg_write <= EX_control_reg_write;
+			MEM_control_reg_write <= EX_control_mem_to_reg;
 
 		END PROCESS;
 
@@ -232,8 +307,8 @@ BEGIN
 		---------------------------------------------------------------------------------------------------------------
 		MEM_WB : PROCESS (clk)
 		BEGIN
-
-			WB_control_WB <= MEM_control_WB;
+			WB_control_mem_to_reg <= MEM_control_mem_to_reg;
+			RegWrite <= MEM_control_reg_write;
 		END PROCESS;
 
 		---------------------------------------------------------------------------------------------------------------
