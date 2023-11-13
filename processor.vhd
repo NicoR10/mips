@@ -91,6 +91,7 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL EX_control_WB : STD_LOGIC := '0';
 	SIGNAL EX_regdst_mux_out : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL EX_pc_4 : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL EX_sum_out : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	-- Control etapa EX
 	SIGNAL EX_control_alu_op : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL EX_control_reg_dst : STD_LOGIC := '0';
@@ -119,6 +120,7 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL WB_D_DataIn : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL WB_reg_wr :STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL WB_data_wr : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL WB_D_Addr : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	---------------------------------------------------------------------------------------------------------------
 BEGIN
 	---------------------------------------------------------------------------------------------------------------
@@ -231,18 +233,18 @@ BEGIN
 			EX_data2_rd <= (OTHERS => '0');
 			EX_immediate <= (OTHERS => '0');
 			EX_Instruction <= (OTHERS => '0');
-			EX_control_WB <= (OTHERS => '0');
+			EX_control_WB <= '0';
 			-- Control etapa EX
-			EX_control_alu_src <= (OTHERS => '0');
+			EX_control_alu_src <= '0';
 			EX_control_alu_op <= (OTHERS => '0');
-			EX_control_reg_dst <= (OTHERS => '0');
+			EX_control_reg_dst <= '0';
 			-- Control etapa MEM
-			EX_control_branch <= (OTHERS => '0');
-			EX_control_mem_read <= (OTHERS => '0');
-			EX_control_mem_write <= (OTHERS => '0');
+			EX_control_branch <= '0';
+			EX_control_mem_read <= '0';
+			EX_control_mem_write <= '0';
 			-- Control etapa WB
-			EX_control_reg_write <= (OTHERS => '0');
-			EX_control_mem_to_reg <= (OTHERS => '0');
+			EX_control_reg_write <= '0';
+			EX_control_mem_to_reg <= '0';
 		ELSIF rising_edge(clk) THEN
 			EX_pc_4 <= ID_pc_4;
 			EX_data1_rd <= ID_data1_rd;
@@ -279,9 +281,9 @@ BEGIN
 	);
 
 	-- MUX ALU
-	PROCESS (ALU_src, EX_data2_rd, EX_immediate)
+	PROCESS (EX_control_alu_src, EX_data2_rd, EX_immediate)
 	BEGIN
-		IF (ALU_src = '0') THEN
+		IF (EX_control_alu_src = '0') THEN
 			EX_alu_mux_out <= EX_data2_rd;
 		ELSE
 			EX_alu_mux_out <= EX_immediate;
@@ -344,12 +346,12 @@ BEGIN
 			D_Addr <= (OTHERS => '0');
 			D_DataOut <= (OTHERS => '0');
 			-- Control etapa MEM
-			MEM_control_branch <= (OTHERS => '0');
-			D_RdStb <= (OTHERS => '0');
-			D_WrStb <= (OTHERS => '0');
+			MEM_control_branch <= '0';
+			D_RdStb <= '0';
+			D_WrStb <= '0';
 			-- Control etapa WB
-			MEM_control_reg_write <= (OTHERS => '0');
-			MEM_control_mem_to_reg <= (OTHERS => '0');
+			MEM_control_reg_write <= '0';
+			MEM_control_mem_to_reg <= '0';
 
 			MEM_regdst_mux_out <= (OTHERS => '0');
 		ELSIF rising_edge(clk) THEN
@@ -382,8 +384,8 @@ BEGIN
 	MEM_WB : PROCESS (clk, reset)
 	BEGIN
 		IF reset = '1' THEN
-			WB_control_mem_to_reg <= (OTHERS => '0');
-			RegWrite <= (OTHERS => '0'); --Control
+			WB_control_mem_to_reg <= '0';
+			RegWrite <= '0'; --Control
 			WB_D_DataIn <= (OTHERS => '0');
 			WB_D_Addr <= (OTHERS => '0');
 			WB_reg_wr <= (OTHERS => '0'); --Escribir registro
@@ -407,7 +409,7 @@ BEGIN
 		ELSIF (WB_control_mem_to_reg = '1') THEN
 			WB_data_wr <= WB_D_Addr;
 		ELSE
-			WB_data_wr <= "00000";
+			WB_data_wr <= (OTHERS => '0'); 
 		END IF;
 	END PROCESS;
 
