@@ -127,28 +127,33 @@ BEGIN
 	-- ETAPA IF
 	---------------------------------------------------------------------------------------------------------------
 	-- Contador de programa
-	PROCESS (clk, reset)
+	PROCESS (Clk, reset)
 	BEGIN
 		IF reset = '1' THEN
 			IF_pc <= (OTHERS => '0');
-		ELSIF rising_edge(clk) THEN
+			--IF_pc_4 <= x"00000004";
+		ELSIF rising_edge(Clk) THEN
 			IF (MEM_pc_src = '0') THEN
-				IF_pc_4 <= IF_pc + 4;
-				I_Addr <= IF_pc_4;
+				--IF_pc <= IF_pc_4;
+				--IF_pc_4 <= IF_pc + 4;
+				IF_pc <= IF_pc + 4;
+				I_Addr <= IF_pc;
 			ELSE
 				I_Addr <= MEM_sum_out;
 			END IF;
 		END IF;
 	END PROCESS;
 
+	IF_pc_4 <= IF_pc + 4;
+
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION IF/ID
 	--------------------------------------------------------------------------------------------------------------- 
-	IF_ID : PROCESS (clk)
+	IF_ID : PROCESS (Clk)
 	BEGIN
 		IF reset = '1' THEN
 			ID_pc_4 <= (OTHERS => '0');
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(Clk) THEN
 			ID_pc_4 <= IF_pc_4;
 		END IF;
 	END PROCESS;
@@ -158,7 +163,7 @@ BEGIN
 	-- Instanciacion del banco de registros
 	Registers_inst : registers
 	PORT MAP(
-		clk => clk,
+		clk => Clk,
 		reset => reset,
 		wr => RegWrite, --control
 		reg1_dr => ID_Instruction(25 DOWNTO 21), --rt
@@ -225,7 +230,7 @@ BEGIN
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION ID/EX
 	---------------------------------------------------------------------------------------------------------------
-	ID_EX : PROCESS (clk, reset)
+	ID_EX : PROCESS (Clk, reset)
 	BEGIN
 		IF reset = '1' THEN
 			EX_pc_4 <= (OTHERS => '0');
@@ -245,7 +250,7 @@ BEGIN
 			-- Control etapa WB
 			EX_control_reg_write <= '0';
 			EX_control_mem_to_reg <= '0';
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(Clk) THEN
 			EX_pc_4 <= ID_pc_4;
 			EX_data1_rd <= ID_data1_rd;
 			EX_data2_rd <= ID_data2_rd;
@@ -339,7 +344,7 @@ BEGIN
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION EX/MEM
 	---------------------------------------------------------------------------------------------------------------
-	EX_MEM : PROCESS (clk, reset)
+	EX_MEM : PROCESS (Clk, reset)
 	BEGIN
 		IF reset = '1' THEN
 			MEM_sum_out <= (OTHERS => '0');
@@ -354,7 +359,7 @@ BEGIN
 			MEM_control_mem_to_reg <= '0';
 
 			MEM_regdst_mux_out <= (OTHERS => '0');
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(Clk) THEN
 			MEM_sum_out <= EX_sum_out;
 			D_Addr <= EX_alu_result;
 			D_DataOut <= EX_data2_rd;
@@ -381,7 +386,7 @@ BEGIN
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION MEM/WB
 	---------------------------------------------------------------------------------------------------------------
-	MEM_WB : PROCESS (clk, reset)
+	MEM_WB : PROCESS (Clk, reset)
 	BEGIN
 		IF reset = '1' THEN
 			WB_control_mem_to_reg <= '0';
@@ -389,7 +394,7 @@ BEGIN
 			WB_D_DataIn <= (OTHERS => '0');
 			WB_D_Addr <= (OTHERS => '0');
 			WB_reg_wr <= (OTHERS => '0'); --Escribir registro
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(Clk) THEN
 			WB_control_mem_to_reg <= MEM_control_mem_to_reg;
 			RegWrite <= MEM_control_reg_write; --Control
 			WB_D_DataIn <= D_DataIn;
