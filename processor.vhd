@@ -131,20 +131,20 @@ BEGIN
 	BEGIN
 		IF reset = '1' THEN
 			IF_pc <= (OTHERS => '0');
-			--IF_pc_4 <= x"00000004";
 		ELSIF rising_edge(Clk) THEN
 			IF (MEM_pc_src = '0') THEN
-				--IF_pc <= IF_pc_4;
-				--IF_pc_4 <= IF_pc + 4;
-				IF_pc <= IF_pc + 4;
-				I_Addr <= IF_pc;
+				IF_pc <= IF_pc + 4;				
 			ELSE
 				I_Addr <= MEM_sum_out;
 			END IF;
 		END IF;
 	END PROCESS;
 
+	I_Addr <= IF_pc;
 	IF_pc_4 <= IF_pc + 4;
+	I_RdStb <= '1';
+  	I_WrStb <= '0';
+  	I_DataOut <= (others => '0');
 
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION IF/ID
@@ -155,7 +155,8 @@ BEGIN
 			ID_pc_4 <= (OTHERS => '0');
 		ELSIF rising_edge(Clk) THEN
 			ID_pc_4 <= IF_pc_4;
-		END IF;
+			ID_Instruction <= I_DataIn;
+		END IF;		
 	END PROCESS;
 	---------------------------------------------------------------------------------------------------------------
 	-- ETAPA ID
