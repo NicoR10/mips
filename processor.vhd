@@ -57,11 +57,13 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL IF_pc_4 : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 
 	--ETAPA ID--
-    SIGNAL aux_control : STD_LOGIC_VECTOR(9 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL aux_control : STD_LOGIC_VECTOR(9 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL cuenta : STD_LOGIC_VECTOR(6 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL ID_reg1_dr : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL ID_reg2_dr : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
 	-- SIGNAL reset : STD_LOGIC := '0';
 	SIGNAL RegWrite : STD_LOGIC := '0';
-	SIGNAL ID_Instruction : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL ID_Instruction : STD_LOGIC_VECTOR(31 DOWNTO 0); --:= (OTHERS => '0');
 	SIGNAL ID_data1_rd : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL ID_data2_rd : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL ID_immediate : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
@@ -108,7 +110,7 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL MEM_pc_src : STD_LOGIC := '0';
 	SIGNAL MEM_sum_out : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL MEM_control_branch : STD_LOGIC := '0';
-	SIGNAL MEM_regdst_mux_out:STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL MEM_regdst_mux_out : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
 	-- SIGNAL MEM_control_mem_read : STD_LOGIC := '0';
 	-- SIGNAL MEM_control_mem_write : STD_LOGIC := '0';
 	-- Control etapa WB
@@ -118,7 +120,7 @@ ARCHITECTURE processor_arq OF processor IS
 	--ETAPA WB-- 
 	SIGNAL WB_control_mem_to_reg : STD_LOGIC := '0';
 	SIGNAL WB_D_DataIn : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL WB_reg_wr :STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL WB_reg_wr : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL WB_data_wr : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL WB_D_Addr : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	---------------------------------------------------------------------------------------------------------------
@@ -132,20 +134,24 @@ BEGIN
 		IF reset = '1' THEN
 			IF_pc <= (OTHERS => '0');
 		ELSIF rising_edge(Clk) THEN
-			IF (MEM_pc_src = '0') THEN
-				IF_pc <= IF_pc + 4;				
-			ELSE
-				I_Addr <= MEM_sum_out;
-			END IF;
+			IF_pc <= IF_pc + 4;
 		END IF;
 	END PROCESS;
 
-	I_Addr <= IF_pc;
 	IF_pc_4 <= IF_pc + 4;
 	I_RdStb <= '1';
-  	I_WrStb <= '0';
-  	I_DataOut <= (others => '0');
+	I_WrStb <= '0';
+	I_DataOut <= (OTHERS => '0');
 
+	-- Mux IF
+	PROCESS (MEM_pc_src, IF_pc, MEM_sum_out)
+	BEGIN
+		IF (MEM_pc_src = '0') THEN
+			I_Addr <= IF_pc;
+		ELSE
+			I_Addr <= MEM_sum_out;
+		END IF;
+	END PROCESS;
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION IF/ID
 	--------------------------------------------------------------------------------------------------------------- 
@@ -156,7 +162,7 @@ BEGIN
 		ELSIF rising_edge(Clk) THEN
 			ID_pc_4 <= IF_pc_4;
 			ID_Instruction <= I_DataIn;
-		END IF;		
+		END IF;
 	END PROCESS;
 	---------------------------------------------------------------------------------------------------------------
 	-- ETAPA ID
@@ -167,12 +173,15 @@ BEGIN
 		clk => Clk,
 		reset => reset,
 		wr => RegWrite, --control
-		reg1_dr => ID_Instruction(25 DOWNTO 21), --rt
-		reg2_dr => ID_Instruction(20 DOWNTO 16), --rs
+		reg1_dr => ID_reg1_dr, --rt
+		reg2_dr => ID_reg2_dr, --rs
 		reg_wr => WB_reg_wr, --Escribir registro
 		data_wr => WB_data_wr, --Escribir dato
 		data1_rd => ID_data1_rd, --Dato leído 1
 		data2_rd => ID_data2_rd); --Dato leído 2
+
+	ID_reg1_dr <= ID_Instruction(25 DOWNTO 21);
+	ID_reg2_dr <= ID_Instruction(20 DOWNTO 16);
 
 	-- Extensión de signo
 	PROCESS (ID_Instruction)
@@ -186,28 +195,27 @@ BEGIN
 
 	-- CONTROL UNIT
 	PROCESS (ID_Instruction)
-    	
 	BEGIN
-		
+
 		-- Tipo R
-		IF (ID_Instruction(31 DOWNTO 25) = "000000") THEN
+		IF (ID_Instruction(31 DOWNTO 26) = "000000") THEN
 			aux_control <= "1010000010";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "100011") THEN -- LW
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "100011") THEN -- LW
 			aux_control <= "0000101011";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "101011") THEN -- SW
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "101011") THEN -- SW
 			aux_control <= "0000100100";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "000100") THEN -- BEQ
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- BEQ
 			aux_control <= "0001010000";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "000100") THEN -- LUI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- LUI
 			-- Señales de control de LUI
 			aux_control <= "0100100010";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "000100") THEN -- ADDI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ADDI
 			-- Señales de control de ADDI
 			aux_control <= "0101100010";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "000100") THEN -- ANDI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ANDI
 			-- Señales de control de ANDI
 			aux_control <= "0110100010";
-		ELSIF (ID_Instruction(31 DOWNTO 25) = "000100") THEN -- ORI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ORI
 			-- Señales de control de ORI
 			aux_control <= "0111100010";
 		ELSE
@@ -225,9 +233,8 @@ BEGIN
 		-- Control etapa WB
 		ID_control_reg_write <= aux_control(1);
 		ID_control_mem_to_reg <= aux_control(0);
-
+	
 	END PROCESS;
-
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION ID/EX
 	---------------------------------------------------------------------------------------------------------------
@@ -373,8 +380,6 @@ BEGIN
 			MEM_control_mem_to_reg <= EX_control_mem_to_reg;
 
 			MEM_regdst_mux_out <= EX_regdst_mux_out;
-
-			
 		END IF;
 
 	END PROCESS;
@@ -415,7 +420,7 @@ BEGIN
 		ELSIF (WB_control_mem_to_reg = '1') THEN
 			WB_data_wr <= WB_D_Addr;
 		ELSE
-			WB_data_wr <= (OTHERS => '0'); 
+			WB_data_wr <= (OTHERS => '0');
 		END IF;
 	END PROCESS;
 
