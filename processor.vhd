@@ -195,33 +195,34 @@ BEGIN
 
 	-- CONTROL UNIT
 	PROCESS (ID_Instruction)
-	BEGIN
-
-		-- Tipo R
-		IF (ID_Instruction(31 DOWNTO 26) = "000000") THEN
-			aux_control <= "1010000010";
+	BEGIN		
+		IF (ID_Instruction(31 DOWNTO 26) = "000000") THEN -- Tipo R
+			aux_control <= "1010000011";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "100011") THEN -- LW
-			aux_control <= "0000101011";
+			aux_control <= "0000101010";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "101011") THEN -- SW
-			aux_control <= "0000100100";
+			aux_control <= "0000100101";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- BEQ
-			aux_control <= "0001010000";
+			aux_control <= "0001010001";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- LUI
 			-- Señales de control de LUI
-			aux_control <= "0100100010";
+			aux_control <= "0100100011";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ADDI
 			-- Señales de control de ADDI
-			aux_control <= "0101100010";
+			aux_control <= "0101100011";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ANDI
 			-- Señales de control de ANDI
-			aux_control <= "0110100010";
+			aux_control <= "0110100011";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ORI
 			-- Señales de control de ORI
-			aux_control <= "0111100010";
+			aux_control <= "0111100011";
 		ELSE
 			aux_control <= "0000000000";
 		END IF;
+	END PROCESS;
 
+	PROCESS (aux_control)
+	BEGIN
 		-- Control etapa EX
 		ID_control_reg_dst <= aux_control(9);
 		ID_control_alu_op <= aux_control(8 DOWNTO 6);
@@ -233,7 +234,7 @@ BEGIN
 		-- Control etapa WB
 		ID_control_reg_write <= aux_control(1);
 		ID_control_mem_to_reg <= aux_control(0);
-	
+
 	END PROCESS;
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION ID/EX
@@ -413,7 +414,7 @@ BEGIN
 	-- ETAPA WB
 	---------------------------------------------------------------------------------------------------------------
 	-- MUX WB
-	PROCESS (WB_control_mem_to_reg, WB_D_DataIn)
+	PROCESS (WB_control_mem_to_reg, WB_D_DataIn, WB_D_Addr)
 	BEGIN
 		IF (WB_control_mem_to_reg = '0') THEN
 			WB_data_wr <= WB_D_DataIn;
