@@ -204,16 +204,16 @@ BEGIN
 			aux_control <= "0000100101";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- BEQ
 			aux_control <= "0001010001";
-		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- LUI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "001111") THEN -- LUI
 			-- Señales de control de LUI
 			aux_control <= "0100100011";
-		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ADDI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "001000") THEN -- ADDI
 			-- Señales de control de ADDI
 			aux_control <= "0101100011";
-		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ANDI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "001100") THEN -- ANDI
 			-- Señales de control de ANDI
 			aux_control <= "0110100011";
-		ELSIF (ID_Instruction(31 DOWNTO 26) = "000100") THEN -- ORI
+		ELSIF (ID_Instruction(31 DOWNTO 26) = "001101") THEN -- ORI
 			-- Señales de control de ORI
 			aux_control <= "0111100011";
 		ELSE
@@ -340,7 +340,10 @@ BEGIN
 		ELSIF (EX_control_alu_op = "001") THEN
 			-- branch equal
 			EX_alu_ctrl_out <= "110";
-		ELSE
+		ELSIF (EX_control_alu_op = "100") THEN
+			-- LUI
+			EX_alu_ctrl_out <= "100";
+		ELSE		
 			EX_alu_ctrl_out <= "000";
 		END IF;
 	END PROCESS;
