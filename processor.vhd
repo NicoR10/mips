@@ -111,6 +111,7 @@ ARCHITECTURE processor_arq OF processor IS
 	SIGNAL MEM_sum_out : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL MEM_control_branch : STD_LOGIC := '0';
 	SIGNAL MEM_regdst_mux_out : STD_LOGIC_VECTOR(4 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL MEM_alu_zero : STD_LOGIC := '0';
 	-- SIGNAL MEM_control_mem_read : STD_LOGIC := '0';
 	-- SIGNAL MEM_control_mem_write : STD_LOGIC := '0';
 	-- Control etapa WB
@@ -195,7 +196,7 @@ BEGIN
 
 	-- CONTROL UNIT
 	PROCESS (ID_Instruction)
-	BEGIN		
+	BEGIN
 		IF (ID_Instruction(31 DOWNTO 26) = "000000") THEN -- Tipo R
 			aux_control <= "1010000011";
 		ELSIF (ID_Instruction(31 DOWNTO 26) = "100011") THEN -- LW
@@ -322,15 +323,15 @@ BEGIN
 	BEGIN
 		IF (EX_control_alu_op = "010") THEN
 			IF (EX_Instruction(5 DOWNTO 0) = "100000") THEN
-				EX_alu_ctrl_out <= "010";
+				EX_alu_ctrl_out <= "010"; --ADD
 			ELSIF (EX_Instruction(5 DOWNTO 0) = "100010") THEN
-				EX_alu_ctrl_out <= "110";
+				EX_alu_ctrl_out <= "110"; --SUB
 			ELSIF (EX_Instruction(5 DOWNTO 0) = "100100") THEN
-				EX_alu_ctrl_out <= "000";
+				EX_alu_ctrl_out <= "000"; --AND
 			ELSIF (EX_Instruction(5 DOWNTO 0) = "100101") THEN
-				EX_alu_ctrl_out <= "001";
+				EX_alu_ctrl_out <= "001"; --OR
 			ELSIF (EX_Instruction(5 DOWNTO 0) = "101010") THEN
-				EX_alu_ctrl_out <= "111";
+				EX_alu_ctrl_out <= "111"; --SLT
 			ELSE
 				EX_alu_ctrl_out <= "000";
 			END IF;
@@ -343,7 +344,16 @@ BEGIN
 		ELSIF (EX_control_alu_op = "100") THEN
 			-- LUI
 			EX_alu_ctrl_out <= "100";
-		ELSE		
+		ELSIF (EX_control_alu_op = "101") THEN
+			-- ADDI
+			EX_alu_ctrl_out <= "010";
+		ELSIF (EX_control_alu_op = "110") THEN
+			-- ANDI
+			EX_alu_ctrl_out <= "000";
+		ELSIF (EX_control_alu_op = "111") THEN
+			-- ORI
+			EX_alu_ctrl_out <= "001";
+		ELSE
 			EX_alu_ctrl_out <= "000";
 		END IF;
 	END PROCESS;
@@ -362,6 +372,7 @@ BEGIN
 			MEM_sum_out <= (OTHERS => '0');
 			D_Addr <= (OTHERS => '0');
 			D_DataOut <= (OTHERS => '0');
+			MEM_alu_zero <= '0';
 			-- Control etapa MEM
 			MEM_control_branch <= '0';
 			D_RdStb <= '0';
@@ -379,6 +390,7 @@ BEGIN
 			MEM_control_branch <= EX_control_branch;
 			D_RdStb <= EX_control_mem_read;
 			D_WrStb <= EX_control_mem_write;
+			MEM_alu_zero <= EX_alu_zero;
 			-- Control etapa WB
 			MEM_control_reg_write <= EX_control_reg_write;
 			MEM_control_mem_to_reg <= EX_control_mem_to_reg;
@@ -391,7 +403,7 @@ BEGIN
 	---------------------------------------------------------------------------------------------------------------
 	-- ETAPA MEM
 	---------------------------------------------------------------------------------------------------------------
-	MEM_pc_src <= EX_alu_zero AND MEM_control_branch; -- AND BRANCH
+	MEM_pc_src <= MEM_alu_zero AND MEM_control_branch; -- AND BRANCH
 
 	---------------------------------------------------------------------------------------------------------------
 	-- REGISTRO DE SEGMENTACION MEM/WB
